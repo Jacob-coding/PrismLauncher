@@ -194,10 +194,10 @@ QString InfoFrame::renderColorCodes(QString input)
                     html += QString("</%1>").arg(tags.takeLast());
                 }
             } else {  // pass unknown codes through
-                html += QString("§%1").arg(code);
+                html += QString("§%1").arg(code).toHtmlEscaped();
             }
         } else {
-            html += *it;
+            html += QString(*it).toHtmlEscaped();
         }
         it++;
     }

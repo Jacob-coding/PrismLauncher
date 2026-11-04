@@ -4,9 +4,11 @@
 #include <QPainter>
 #include <QStyle>
 #include <QStyleOption>
+#include <QTextDocument>
 #include <Qt>
 
 #include "MultiDecorationItemDelegate.h"
+#include "widgets/InfoFrame.h"
 
 namespace {
 std::optional<QList<MultiDecorationItemDelegate::Icon>> iconsAt(const QModelIndex& index)
@@ -106,4 +108,41 @@ QSize MultiDecorationItemDelegate::sizeHint(const QStyleOptionViewItem& option, 
     int width = style->sizeFromContents(QStyle::CT_ItemViewItem, &opt, {}, opt.widget).width();
     int height = style->sizeFromContents(QStyle::CT_ItemViewItem, &altOpt, {}, opt.widget).height();
     return {width, height};
+}
+
+void ColorCodeItemDelegate::initStyleOption(QStyleOptionViewItem* option, const QModelIndex& index) const
+{
+    MultiDecorationItemDelegate::initStyleOption(option, index);
+    if (index.column() == m_column) {
+        option->text.clear();
+    }
+}
+
+void ColorCodeItemDelegate::paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const
+{
+    MultiDecorationItemDelegate::paint(painter, option, index);
+    if (index.column() != m_column) {
+        return;
+    }
+
+    auto textOption = option;
+    initStyleOption(&textOption, index);
+
+    const auto* style = textOption.widget != nullptr ? textOption.widget->style() : QApplication::style();
+    const QRect textRect = style->subElementRect(QStyle::SE_ItemViewItemText, &textOption, textOption.widget);
+
+    QTextDocument document;
+    document.setDocumentMargin(0);
+    document.setDefaultFont(textOption.font);
+    const auto colorRole = (textOption.state & QStyle::State_Selected) != 0 ? QPalette::HighlightedText : QPalette::Text;
+    document.setDefaultStyleSheet(QString("body { color: %1; }").arg(textOption.palette.color(colorRole).name()));
+    document.setHtml(InfoFrame::renderColorCodes(index.data(Qt::DisplayRole).toString()));
+    document.setTextWidth(textRect.width());
+
+    painter->save();
+    painter->setClipRect(textRect);
+    const qreal yOffset = qMax<qreal>(0, (textRect.height() - document.size().height()) / 2);
+    painter->translate(textRect.left(), textRect.top() + yOffset);
+    document.drawContents(painter);
+    painter->restore();
 }

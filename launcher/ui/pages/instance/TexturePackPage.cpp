@@ -37,6 +37,7 @@
 
 #include "TexturePackPage.h"
 
+#include "ui/MultiDecorationItemDelegate.h"
 #include "ui/dialogs/CustomMessageBox.h"
 #include "ui/dialogs/ProgressDialog.h"
 #include "ui/dialogs/ResourceDownloadDialog.h"
@@ -45,6 +46,8 @@
 TexturePackPage::TexturePackPage(MinecraftInstance* instance, TexturePackFolderModel* model, QWidget* parent)
     : ExternalResourcesPage(instance, model, parent), m_model(model)
 {
+    m_ui->treeView->setItemDelegate(new ColorCodeItemDelegate(TexturePackFolderModel::NameColumn, this));
+
     m_ui->actionDownloadItem->setText(tr("Download Packs"));
     m_ui->actionDownloadItem->setToolTip(tr("Download texture packs from online mod platforms"));
     m_ui->actionDownloadItem->setEnabled(true);
